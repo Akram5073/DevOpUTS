@@ -1,5 +1,10 @@
 pipeline {
-    agent any
+    agent {
+        docker {
+            image 'python:3.11'
+            args '-u'  // supaya output realtime (optional)
+        }
+    }
 
     environment {
         VENV_DIR = '.venv'
@@ -8,15 +13,15 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                git branch: 'development', url: 'https://github.com/Akram5073/DevOpUTS.git'
+                checkout scm
             }
         }
 
         stage('Setup Virtual Env') {
             steps {
+                sh 'python3 -m venv ${VENV_DIR}'
                 sh '''
-                    python3 -m venv $VENV_DIR
-                    . $VENV_DIR/bin/activate
+                    . ${VENV_DIR}/bin/activate
                     pip install --upgrade pip
                     pip install -r requirements.txt
                 '''
@@ -26,24 +31,23 @@ pipeline {
         stage('Run Tests') {
             steps {
                 sh '''
-                    . $VENV_DIR/bin/activate
-                    pytest tests/ --maxfail=1 --disable-warnings -q
+                    . ${VENV_DIR}/bin/activate
+                    # Misal kamu pakai pytest, sesuaikan jika pakai test framework lain
+                    pytest
                 '''
             }
         }
 
         stage('Run Flask (optional preview)') {
-            when {
-                expression { return false } // ubah jadi true jika ingin coba run Flask
-            }
             steps {
-                sh '''
-                    . $VENV_DIR/bin/activate
-                    python app/main.py &
-                    sleep 5
-                    curl -i http://localhost:5000
-                    kill $(lsof -t -i:5000)
-                '''
+                script {
+                    // Kalau kamu mau jalankan flask untuk preview,
+                    // ini contoh menjalankan Flask di background selama pipeline berjalan (opsional)
+                    sh '''
+                        . ${VENV_DIR}/bin/activate
+                        nohup flask run --host=0.0.0.0 --port=5000 &
+                    '''
+                }
             }
         }
     }
@@ -51,6 +55,12 @@ pipeline {
     post {
         always {
             echo 'Pipeline finished.'
+        }
+        failure {
+            echo 'Build failed!'
+        }
+        success {
+            echo 'Build succeeded!'
         }
     }
 }
