@@ -4,7 +4,7 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                git 'https://github.com/username/flask-ci-demo.git' // Ganti dengan repo kamu
+                git 'https://github.com/Akram5073/DevOpUTS.git' // Ganti dengan repo kamu
             }
         }
 
