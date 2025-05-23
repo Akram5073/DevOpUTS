@@ -1,8 +1,8 @@
 pipeline {
-    agent {
-        docker {
-            image 'python:3.10'
-        }
+    agent any
+
+    environment {
+        VENV_DIR = '.venv'
     }
 
     stages {
@@ -12,15 +12,38 @@ pipeline {
             }
         }
 
-        stage('Install Dependencies') {
+        stage('Setup Virtual Env') {
             steps {
-                sh 'pip install -r requirements.txt'
+                sh '''
+                    python3 -m venv $VENV_DIR
+                    . $VENV_DIR/bin/activate
+                    pip install --upgrade pip
+                    pip install -r requirements.txt
+                '''
             }
         }
 
         stage('Run Tests') {
             steps {
-                sh 'pytest tests/ --maxfail=1 --disable-warnings -q'
+                sh '''
+                    . $VENV_DIR/bin/activate
+                    pytest tests/ --maxfail=1 --disable-warnings -q
+                '''
+            }
+        }
+
+        stage('Run Flask (optional preview)') {
+            when {
+                expression { return false } // ubah jadi true jika ingin coba run Flask
+            }
+            steps {
+                sh '''
+                    . $VENV_DIR/bin/activate
+                    python app/main.py &
+                    sleep 5
+                    curl -i http://localhost:5000
+                    kill $(lsof -t -i:5000)
+                '''
             }
         }
     }
