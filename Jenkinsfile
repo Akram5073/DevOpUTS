@@ -1,10 +1,5 @@
 pipeline {
-    agent {
-        docker {
-            image 'python:3.11'
-            args '-u'  // output realtime
-        }
-    }
+    agent any  // Jalankan di node Jenkins apa saja yang tersedia dan sudah siap environmentnya
 
     environment {
         VENV_DIR = '.venv'
@@ -36,7 +31,7 @@ pipeline {
                 '''
             }
         }
-
+        
         // Optional: jalankan Flask app di background selama pipeline berjalan
         stage('Run Flask (optional)') {
             steps {
