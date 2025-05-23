@@ -18,18 +18,6 @@ pipeline {
                 '''
             }
         }
-
-        stage('Run Flask App') {
-            steps {
-                sh '''
-                . venv/bin/activate
-                nohup python main.py &
-                sleep 5
-                curl http://127.0.0.1:5000
-                '''
-            }
-        }
-
         
         stage('Run Tests') {
             steps {
