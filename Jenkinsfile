@@ -2,7 +2,7 @@ pipeline {
     agent {
         docker {
             image 'python:3.11'
-            args '-u'  // supaya output realtime (optional)
+            args '-u'  // output realtime
         }
     }
 
@@ -17,10 +17,10 @@ pipeline {
             }
         }
 
-        stage('Setup Virtual Env') {
+        stage('Setup Virtual Env & Install Dependencies') {
             steps {
-                sh 'python3 -m venv ${VENV_DIR}'
                 sh '''
+                    python3 -m venv ${VENV_DIR}
                     . ${VENV_DIR}/bin/activate
                     pip install --upgrade pip
                     pip install -r requirements.txt
@@ -32,35 +32,31 @@ pipeline {
             steps {
                 sh '''
                     . ${VENV_DIR}/bin/activate
-                    # Misal kamu pakai pytest, sesuaikan jika pakai test framework lain
                     pytest
                 '''
             }
         }
 
-        stage('Run Flask (optional preview)') {
+        // Optional: jalankan Flask app di background selama pipeline berjalan
+        stage('Run Flask (optional)') {
             steps {
-                script {
-                    // Kalau kamu mau jalankan flask untuk preview,
-                    // ini contoh menjalankan Flask di background selama pipeline berjalan (opsional)
-                    sh '''
-                        . ${VENV_DIR}/bin/activate
-                        nohup flask run --host=0.0.0.0 --port=5000 &
-                    '''
-                }
+                sh '''
+                    . ${VENV_DIR}/bin/activate
+                    nohup flask run --host=0.0.0.0 --port=5000 &
+                '''
             }
         }
     }
 
     post {
         always {
-            echo 'Pipeline finished.'
+            echo 'Pipeline selesai.'
         }
         failure {
-            echo 'Build failed!'
+            echo 'Build gagal!'
         }
         success {
-            echo 'Build succeeded!'
+            echo 'Build berhasil!'
         }
     }
 }
