@@ -1,24 +1,20 @@
 pipeline {
-    agent any  // Jalankan di node Jenkins apa saja yang tersedia dan sudah siap environmentnya
-
-    environment {
-        VENV_DIR = '.venv'
-    }
+    agent any
 
     stages {
-        stage('Checkout') {
+        stage('Clone') {
             steps {
-                checkout scm
+                git branch: 'development', url: 'https://github.com/Akram5073/DevOpUTS.git'
             }
         }
 
-        stage('Setup Virtual Env & Install Dependencies') {
+        stage('Install Dependencies') {
             steps {
                 sh '''
-                    python3 -m venv ${VENV_DIR}
-                    . ${VENV_DIR}/bin/activate
-                    pip install --upgrade pip
-                    pip install -r requirements.txt
+                python3 -m venv venv
+                . venv/bin/activate
+                pip install --upgrade pip
+                pip install -r requirements.txt
                 '''
             }
         }
@@ -26,32 +22,10 @@ pipeline {
         stage('Run Tests') {
             steps {
                 sh '''
-                    . ${VENV_DIR}/bin/activate
-                    pytest
+                . venv/bin/activate
+                PYTHONPATH=. pytest test_main.py
                 '''
             }
-        }
-        
-        // Optional: jalankan Flask app di background selama pipeline berjalan
-        stage('Run Flask (optional)') {
-            steps {
-                sh '''
-                    . ${VENV_DIR}/bin/activate
-                    nohup flask run --host=0.0.0.0 --port=5000 &
-                '''
-            }
-        }
-    }
-
-    post {
-        always {
-            echo 'Pipeline selesai.'
-        }
-        failure {
-            echo 'Build gagal!'
-        }
-        success {
-            echo 'Build berhasil!'
         }
     }
 }
