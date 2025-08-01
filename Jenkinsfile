@@ -1,6 +1,10 @@
 pipeline {
     agent any
 
+    environment {
+        VENV_DIR = "venv"
+    }
+
     stages {
         stage('Clone') {
             steps {
@@ -11,20 +15,25 @@ pipeline {
         stage('Install Dependencies') {
             steps {
                 sh '''
-                python3 -m venv venv
-                . venv/bin/activate
-                pip install --upgrade pip
-                pip install -r requirements.txt
+                    python3 -m venv $VENV_DIR
+                    . $VENV_DIR/bin/activate
+                    pip install --upgrade pip
+                    pip install -r requirements.txt
                 '''
             }
         }
-        
+
         stage('Run Tests') {
             steps {
                 sh '''
-                . venv/bin/activate
-                PYTHONPATH=. pytest test_main.py
+                    . $VENV_DIR/bin/activate
+                    pytest test_main.py --junitxml=results.xml
                 '''
+            }
+            post {
+                always {
+                    junit 'results.xml'
+                }
             }
         }
     }
